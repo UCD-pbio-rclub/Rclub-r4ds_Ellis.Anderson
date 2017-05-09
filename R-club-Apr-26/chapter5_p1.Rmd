@@ -1,0 +1,137 @@
+---
+title: "Chapter5"
+output: 
+  html_document: 
+    keep_md: yes
+---
+
+# Chapter 5 Assignment, Part 1
+
+```{r}
+# Setup
+library(tidyverse)
+library(nycflights13)
+```
+
+## Exercise 5.2.4
+```{r}
+View(flights)
+# Ex 1.1
+filter(flights, arr_delay >= 120)
+
+# Ex 1.2
+filter(flights, dest %in% c('IAH', 'HOU'))
+
+# Ex 1.3
+filter(flights, carrier %in% c('UA', 'AA', 'DL'))
+
+# Ex 1.4
+filter(flights, month %in% c(7,8,9))
+
+# Ex 1.5
+filter(flights, dep_delay <= 0 & arr_delay >= 120)
+
+# Ex 1.6
+filter(flights, dep_delay >= 60 & (dep_delay-arr_delay) >= 30)
+
+# Ex 1.7
+filter(flights, dep_time == 2400 | dep_time <= 600)
+
+# Ex 2
+filter(flights, between(month, 7, 9))
+
+# Ex 3
+miss_dep <- filter(flights, is.na(dep_time))
+# these flights are also missing delays and arrival times and are likely cancelled flights
+
+# Ex 4
+# I'm not entirely sure what this question is asking but anything ^ 0 is still 1, anything | True is True and anything & False is still False. 
+```
+
+## Exercise 5.3.1
+```{r}
+# Ex 1
+arrange(flights, desc(is.na(dep_time)))
+
+# Ex 2
+arrange(flights, desc(dep_delay))
+arrange(flights, dep_delay)
+
+# Ex 3
+arrange(flights, air_time)
+
+# Ex 4
+arrange(flights, distance)
+arrange(flights, desc(distance))
+```
+
+## Exercise 5.4.1
+```{r}
+# Ex 1
+select(flights, starts_with("dep"), starts_with("arr"))
+select(flights, dep_time, arr_time, dep_delay, arr_delay)
+select(flights, ends_with('_time'), ends_with('_delay'))
+select(flights, dep_time:arr_delay)
+select(flights, matches("^(dep|arr)_(time|delay)$"))
+
+# Ex 2
+select(flights, dep_time, dep_time)
+# Nothing really, the code works as if it was only added once
+
+# Ex 3
+?one_of
+# This allows you to supply a list of terms in the form of a variable
+vars <- c("year", "month", "day", "dep_delay", "arr_delay")
+select(flights, one_of(vars))
+# ^this works
+# select(flights, vars)
+# ^whereas this does not
+
+# Ex 4
+select(flights, contains("TIME"))
+# not really, but I also just read the documentation. 
+# Just set ignore.case = FALSE if you don't want case-insensitive matching.
+```
+
+## Exercise 5.5.1
+I'm interested in more information on lead() and lag() functions.
+I'm also interested in cumulative and rolling aggregates.
+```{r}
+# Ex 1
+mutate(flights, 
+       dep_time_min = dep_time %/% 100 * 60 + dep_time %% 100)
+# Ex 2
+mutate(flights,
+       airtime = arr_time - dep_time)
+# The computed airtime and logged airtime are not the same. 
+# They do not account for time zones and therefore can be skewed.
+# That being said a lot of the flights are off by intervals of hours and some minutes so I'm not entirely sure how to account for this. 
+# This could be in relation to taxi time, etc.
+
+# Ex 3
+# The dataset I loaded doesn't include sched_dep_time but I'd imagine dep_delay = dep_time - sched_dep_time
+
+# departures <- mutate(flights,
+#       dep_diff = dep_time - sched_dep_time)
+# select(flights, dep_delay, dep_diff, dep_time, sched_dep_time)
+
+# Ex 4
+(delay <- mutate(flights,
+        rank = min_rank(desc(dep_delay))))
+rank_delay <- filter(delay, rank <= 10)
+arrange(rank_delay, rank)
+
+# Ex 5
+1:3 + 1:10
+# R uses recycling if two vectors are different lengths.
+# The above function returns 1 + 1, 2 + 2, 3 + 3, 1 + 4, 2 + 5, etc.
+# This is because the first vector is shorter than the second,
+# so R starts over from the beginning whenever it runs out of numbers
+# from the first vector to add to the second.
+# We also get a warning because the first vector doesn't evenly split 
+# into the second
+
+# Ex 6
+# cos(), sin(), tan(), acos(), asin(), acos(), atan(), atan2(),
+# cospi(), sinpi() and tanpi()
+```
