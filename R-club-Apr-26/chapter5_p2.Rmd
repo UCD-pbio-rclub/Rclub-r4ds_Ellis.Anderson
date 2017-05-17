@@ -1,6 +1,8 @@
 ---
 title: "chapter5_p2"
-output: html_document
+output: 
+  html_document: 
+    keep_md: yes
 ---
 
 # Chapter 5 Part 2
