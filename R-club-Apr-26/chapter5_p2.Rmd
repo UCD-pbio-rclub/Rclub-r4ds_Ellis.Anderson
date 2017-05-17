@@ -1,0 +1,187 @@
+---
+title: "chapter5_p2"
+output: html_document
+---
+
+# Chapter 5 Part 2
+
+## Set Up
+```{r}
+library(tidyverse)
+library(nycflights13)
+
+not_cancelled <- flights %>% 
+  filter(!is.na(dep_delay), !is.na(arr_delay))
+```
+
+## Exercise 5.6
+#### Question 1
+
+Not super sure what this question is asking but a delay is more important than arriving early. I might assess the delay characteristics using a point system to establish the reliability of the flight and then also give the average time of arrival based on the probabilities of being early or late. 
+
+As being early is nice I might give that 1 point for every minute, whereas being late would give two negative points per minute. So the first flight would get a score of -15 (.5 \* 15 \* 1) + (.5 \* 15 \* -2) and an average arrival time of on time. 
+
+A better way to determine the reliability score might be to use the standard deviation from the mean. For the first flight that would be sqrt(.5*(15^2+(-15)^2)) or 15 for the first flight, but 0 for the flight that's always 10 minutes late. The larger the score the more variable the flight, whereas a score of 0 means the flight is always at the time given by the average time. 
+
+All this said, the first points score might still be useful as it allows someone to understand whether their flight is more likely to be early or late depending on the score. 
+
+#### Question 2
+
+```{r}
+not_cancelled %>%
+  group_by(dest) %>%
+  summarise(n = n())
+
+not_cancelled %>%
+  group_by(tailnum) %>%
+  summarise(distance = sum(distance))
+```
+
+#### Question 3
+
+arr_delay is the most important column as flights that are cancelled in air might still have dep_delays.
+
+```{r}
+flights %>%
+  filter(!is.na(dep_delay) & is.na(arr_delay))
+# this returns a few lines
+
+flights %>%
+  filter(is.na(dep_delay) & !is.na(arr_delay))
+# this does not
+```
+
+#### Question 4
+
+```{r}
+cancelled_by_day <- flights %>%
+  group_by(year, month, day) %>%
+  summarise(cancelled = sum(!is.na(arr_delay)))
+  
+cancelled_by_day$cal_day <- row.names(cancelled_by_day)
+
+ggplot(data = cancelled_by_day, mapping = aes(x = cal_day,
+                                              y = cancelled)) +
+    geom_point()
+
+flights %>%
+  group_by(year, month, day) %>%
+  mutate(cancelled = is.na(arr_delay)) %>%
+  summarise(prop_cancelled = mean(cancelled),
+         avg_delay = mean(dep_delay, na.rm = TRUE)) %>%
+  ggplot(mapping = aes(x=avg_delay, y=prop_cancelled)) +
+    geom_point() +
+    geom_smooth()
+  
+```
+
+#### Question 5
+
+So I worked really hard on this before I accidentally deleted all my homework so I kinda already know the answer - while you can try and disenttangle the effects of bad airports, it turns out even when you remove bad airports the airline avg delays don't change much.
+
+```{r}
+flights %>%
+  group_by(carrier) %>%
+  summarise(avg_delay = mean(arr_delay, na.rm = TRUE)) %>%
+  arrange(desc(avg_delay))
+```
+
+#### Question 6
+
+```{r}
+not_cancelled %>% count(dest, sort=TRUE)
+not_cancelled %>% count(tailnum, wt=distance, sort=TRUE)
+```
+
+sort returns rows in descending order, similarly to desc(arrange()).
+
+## Exercise 5.7
+#### Question 1
+
+each operation works on the group instead of an individual data point. 
+
+#### Question 2
+
+```{r}
+not_cancelled %>%
+  group_by(tailnum) %>%
+  mutate(avg_delay = mean(arr_delay)) %>%
+  select(tailnum, avg_delay) %>%
+  arrange(desc(avg_delay))
+```
+
+#### Question 3
+
+```{r}
+not_cancelled %>%
+  group_by(hour) %>%
+  summarise(delay_by_time = mean(dep_delay)) %>%
+  arrange(delay_by_time)
+```
+
+#### Question 4
+
+```{r}
+not_cancelled %>%
+  group_by(dest) %>%
+  mutate(tot_delay = sum(arr_delay)) %>%
+  ungroup() %>%
+  mutate(prop_delay = arr_delay/tot_delay) %>%
+  select(flight, arr_delay, tot_delay, prop_delay, dest)
+```
+
+#### Question 5
+
+```{r}
+not_cancelled %>%
+  group_by(year, month, day) %>%
+  mutate(lag_delay = lag(dep_delay)) %>%
+  select(dep_time, dep_delay, lag_delay) %>%
+  filter(!is.na(lag_delay)) %>%
+  ggplot(mapping = aes(x = dep_delay, y = lag_delay)) + 
+    geom_point(alpha=.03) + 
+    geom_smooth()
+```
+
+#### Question 6
+
+```{r}
+not_cancelled %>%
+  group_by(dest) %>%
+  summarise(avg_flight = mean(air_time),
+            fast_flight = min(air_time))
+
+not_cancelled %>%
+  group_by(dest) %>%
+  mutate(avg_flight = mean(air_time),
+         fast_flight = (air_time - avg_flight)/avg_flight) %>%
+  arrange(fast_flight)
+
+not_cancelled %>%
+  group_by(dest) %>%
+  mutate(time_diff = air_time - mean(air_time)) %>%
+  arrange(desc(time_diff))
+```
+
+#### Question 7
+
+```{r}
+flights %>%
+  group_by(dest, carrier) %>%
+  summarise() %>%
+  summarise(n_carriers = n()) %>%
+  filter(n_carriers >2) %>%
+  arrange(desc(n_carriers))
+
+flights %>% 
+  group_by(dest, carrier) %>%
+  count(carrier) %>%
+  group_by(carrier) %>%
+  count(sort = TRUE)
+```
+
+#### Question 8
+
+I have no idea how to do this and spent like three hours on it last time and basically got no where sorry = (
+
+
