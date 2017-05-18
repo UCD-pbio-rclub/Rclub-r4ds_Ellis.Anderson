@@ -58,12 +58,12 @@ flights %>%
 ```{r}
 cancelled_by_day <- flights %>%
   group_by(year, month, day) %>%
-  summarise(cancelled = sum(!is.na(arr_delay)))
+  summarise(cancelled = sum(is.na(arr_delay)))
   
 cancelled_by_day$cal_day <- row.names(cancelled_by_day)
 
 ggplot(data = cancelled_by_day, mapping = aes(x = cal_day,
-                                              y = cancelled)) +
+                                              y = cancelled, color=as.factor(month))) +
     geom_point()
 
 flights %>%
@@ -118,7 +118,9 @@ not_cancelled %>%
 not_cancelled %>%
   group_by(hour) %>%
   summarise(delay_by_time = mean(dep_delay)) %>%
-  arrange(delay_by_time)
+  arrange(delay_by_time) %>%
+  ggplot(mapping = aes(x=hour, y=delay_by_time)) +
+    geom_point()
 ```
 
 #### Question 4
@@ -129,7 +131,8 @@ not_cancelled %>%
   mutate(tot_delay = sum(arr_delay)) %>%
   ungroup() %>%
   mutate(prop_delay = arr_delay/tot_delay) %>%
-  select(flight, arr_delay, tot_delay, prop_delay, dest)
+  select(flight, arr_delay, tot_delay, prop_delay, dest) %>%
+  arrange(desc(prop_delay))
 ```
 
 #### Question 5
@@ -172,20 +175,28 @@ flights %>%
   group_by(dest, carrier) %>%
   summarise() %>%
   summarise(n_carriers = n()) %>%
-  filter(n_carriers >2) %>%
-  arrange(desc(n_carriers))
+  filter(n_carriers >2) 
 
 flights %>% 
   group_by(dest, carrier) %>%
   count(carrier) %>%
   group_by(carrier) %>%
-  count(sort = TRUE)
+  count(sort = TRUE) 
 ```
 
 #### Question 8
 
 I have no idea how to do this and spent like three hours on it last time and basically got no where sorry = (
 
+```{r}
+flights %>%
+  arrange(tailnum, year, month, day) %>%
+  group_by(tailnum) %>%
+  mutate(delay_gt1hr = dep_delay > 60) %>%
+  mutate(before_delay = cumsum(delay_gt1hr)) %>%
+  filter(before_delay < 1) %>%
+  count(sort = TRUE)
+```
 
 
 
